@@ -14,6 +14,8 @@ class TerminalBuffer(
     val scrollbackMaxSize: Int,
 ) {
     lateinit var grid: Grid
+    lateinit var screen: Screen
+    lateinit var scrollback: Scrollback
 
     fun setup(
         width: Int,
@@ -43,10 +45,13 @@ class TerminalBuffer(
             }
         }
         grid = Grid(layout)
+        screen = Screen.init(width, height)
+        scrollback = Scrollback.init(width, height, scrollbackMaxSize)
 
         return this
     }
 }
+
 
 data class Grid(
     val layout: Array<Array<Cell>>,
@@ -77,5 +82,33 @@ data class Cell(
 
     fun createAnsiSequence(code1: Int, code2: Int? = null): String {
         return "${ANSI_CSI}${code1}${code2 ?: ""}m"
+    }
+}
+
+
+object Screen {
+    var width: Int = 0
+    var height: Int = 0
+    var lineCount: Int = 0
+
+    fun init(width: Int, height: Int): Screen {
+        this.width = width
+        this.height = height
+        return this
+    }
+}
+
+
+object Scrollback {
+    var width: Int = 0
+    var height: Int = 0
+    var maxSize: Int = 0
+    val lineCount: Int = 0
+
+    fun init(width: Int, height: Int, maxSize: Int): Scrollback {
+        this.width = width
+        this.height = height
+        this.maxSize = maxSize
+        return this
     }
 }

@@ -3,10 +3,9 @@ package com.example
 
 // https://jakob-bagterp.github.io/colorist-for-python/ansi-escape-codes/standard-16-colors/
 
-const val UNICODE_ESC = "\u001B"
-const val ANSI_CSI = "$UNICODE_ESC["
+const val ANSI_CSI = "\u001B["
 
-enum class AnsiColor(code: Int?) {
+enum class AnsiColor(val code: Int) {
     BLACK(0),
     RED(1),
     GREEN(2),
@@ -19,7 +18,7 @@ enum class AnsiColor(code: Int?) {
 }
 
 
-enum class AnsiPlacement(code: Int) {
+enum class AnsiPlacementIntensity(val code: Int) {
     STANDARD_FOREGROUND(3),
     STANDARD_BACKGROUND(4),
     BRIGHT_FOREGROUND(9),
@@ -27,7 +26,7 @@ enum class AnsiPlacement(code: Int) {
 }
 
 
-enum class AnsiEffect(on: Int?, off: Int?) {
+enum class AnsiEffect(val on: Int?, val off: Int?) {
     NONE(null, null),
     BOLD(1, 21),
     DIM(2, 22),

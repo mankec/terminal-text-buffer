@@ -3,8 +3,8 @@ package com.example
 const val DEFAULT_WIDTH = 80
 const val DEFAULT_HEIGHT = 24
 const val DEFAULT_SCROLLBACK_MAX_SIZE = 100
-val DEFAULT_FOREGROUND_COLOR = AnsiColor.WHITE
-val DEFAULT_BACKGROUND_COLOR = AnsiColor.BLUE
+val DEFAULT_FOREGROUND_COLOR = AnsiColor.MAGENTA
+val DEFAULT_BACKGROUND_COLOR = AnsiColor.BLACK
 val DEFAULT_STYLE = AnsiEffect.NONE
 
 const val EMPTY_CHAR = ' '
@@ -22,14 +22,7 @@ class TerminalBuffer(
         backgroundColor: AnsiColor,
         style: AnsiEffect,
     ): TerminalBuffer {
-        val cell = Cell(
-            foregroundColor,
-            backgroundColor,
-            style,
-        )
         // Account for border
-        var charValue: Char
-        var modifiable: Boolean
         val rowCount = height + 2
         val colCount = width + 2
         val layout = Array(rowCount) { rowIdx ->
@@ -68,4 +61,24 @@ data class Cell(
     val style: AnsiEffect,
     var char: Char = EMPTY_CHAR,
     var modifiable: Boolean = true,
-)
+) {
+    fun render(): String {
+        val foregroundSeq = createAnsiSequence(
+            AnsiPlacementIntensity.BRIGHT_FOREGROUND.code,
+            foregroundColor.code
+        )
+        val backgroundSeq = createAnsiSequence(
+            AnsiPlacementIntensity.STANDARD_BACKGROUND.code,
+            backgroundColor.code
+        )
+        val styleSeq =
+            if (!modifiable || style == AnsiEffect.NONE) ""
+            else createAnsiSequence(requireNotNull(style.on))
+        val resetSeq = "${ANSI_CSI}${AnsiColor.RESET.code}m"
+        return "${backgroundSeq}${foregroundSeq}${styleSeq}${char}${resetSeq}"
+    }
+
+    fun createAnsiSequence(code1: Int, code2: Int? = null): String {
+        return "${ANSI_CSI}${code1}${code2 ?: ""}m"
+    }
+}

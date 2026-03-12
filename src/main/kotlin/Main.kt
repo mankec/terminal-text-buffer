@@ -32,10 +32,13 @@ fun main() {
 
     val terminalBuffer = TerminalBuffer(scrollbackMaxSize)
         .setup(width, height, foregroundColor, backgroundColor, style)
-0
-    println("TERMINAL TEXT BUFFER")
 
-    terminalBuffer.grid.layout.forEach { println(it.joinToString("") { it.char.toString() }) }
+    terminalBuffer.grid.layout.forEach { row ->
+        println(
+            row.map { cell -> cell.render() }
+                .joinToString("")
+       )
+    }
 
     while (true) {
     }

@@ -1,8 +1,8 @@
 package com.example
 
-const val DEFAULT_WIDTH = 80
-const val DEFAULT_HEIGHT = 24
-const val DEFAULT_SCROLLBACK_MAX_SIZE = 100
+const val DEFAULT_WIDTH = 10
+const val DEFAULT_HEIGHT = 5
+const val DEFAULT_SCROLLBACK_MAX_SIZE = 5
 val DEFAULT_FOREGROUND_COLOR = AnsiColor.MAGENTA
 val DEFAULT_BACKGROUND_COLOR = AnsiColor.BLACK
 val DEFAULT_STYLE = AnsiEffect.NONE

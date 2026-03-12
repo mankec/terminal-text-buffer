@@ -2,10 +2,16 @@ package com.example
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import java.io.File
+import kotlin.test.BeforeTest
 import kotlin.test.assertContains
 import kotlin.test.assertIsNot
 
 class TerminalBufferTest {
+    lateinit var buffer: TerminalBuffer
+    val pwd = File(".").canonicalPath
+
     private fun setupTerminalBuffer(style: AnsiEffect? = null): TerminalBuffer {
         val width = DEFAULT_WIDTH
         val height = DEFAULT_HEIGHT
@@ -18,31 +24,36 @@ class TerminalBufferTest {
         return terminalBuffer
     }
 
+    @BeforeTest
+    fun setUp() {
+        Cursor.row = 0
+        Cursor.col = 0
+        buffer = setupTerminalBuffer()
+    }
+
     @Test
     fun `border is not modifiable`() {
-        val terminalBuffer = setupTerminalBuffer()
         val rowIdx = 0
         val colIdx = 0
-        val borderCell = terminalBuffer.grid.layout[rowIdx][colIdx]
+        val borderCell = buffer.grid.layout[rowIdx][colIdx]
         assertFalse(borderCell.modifiable)
     }
 
     @Test
     fun `text inside of border is modifiable`() {
-        val terminalBuffer = setupTerminalBuffer()
         val rowIdx = 1
         val colIdx = 1
-        val textCell = terminalBuffer.grid.layout[rowIdx][colIdx]
+        val textCell = buffer.grid.layout[rowIdx][colIdx]
         assert(textCell.modifiable)
     }
 
     @Test
     fun `don't apply style to border, only colors`() {
         val style = AnsiEffect.UNDERLINE
-        val terminalBuffer = setupTerminalBuffer(style)
+        val customBuffer = setupTerminalBuffer(style)
         val rowIdx = 0
         val colIdx = 0
-        val borderCell = terminalBuffer.grid.layout[rowIdx][colIdx]
+        val borderCell = customBuffer.grid.layout[rowIdx][colIdx]
         val rendered = borderCell.render()
         val foregroundSeq = borderCell.createAnsiSequence(
             AnsiPlacementIntensity.BRIGHT_FOREGROUND.code,

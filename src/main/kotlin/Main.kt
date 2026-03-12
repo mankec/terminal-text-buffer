@@ -1,7 +1,5 @@
 package com.example
 
-import java.awt.Color
-
 
 fun main() {
     val isDevelopment =
@@ -32,14 +30,4 @@ fun main() {
 
     val terminalBuffer = TerminalBuffer(scrollbackMaxSize)
         .setup(width, height, foregroundColor, backgroundColor, style)
-
-    terminalBuffer.grid.layout.forEach { row ->
-        println(
-            row.map { cell -> cell.render() }
-                .joinToString("")
-       )
-    }
-
-    while (true) {
-    }
 }

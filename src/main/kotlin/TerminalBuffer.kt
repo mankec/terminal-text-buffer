@@ -1,7 +1,7 @@
 package com.example
 
-const val DEFAULT_HEIGHT = 80
-const val DEFAULT_WIDTH = 24
+const val DEFAULT_WIDTH = 80
+const val DEFAULT_HEIGHT = 24
 const val DEFAULT_SCROLLBACK_MAX_SIZE = 100
 val DEFAULT_FOREGROUND_COLOR = AnsiColor.WHITE
 val DEFAULT_BACKGROUND_COLOR = AnsiColor.BLUE

@@ -33,14 +33,11 @@ class TerminalBuffer(
                     style,
                 )
                 if (rowIdx == 0 || rowIdx == rowCount - 1) {
-                    cell.modifiable = false
                     cell.value = "-"
                 } else if (colIdx == 0 || colIdx == colCount - 1) {
-                    cell.modifiable = false
                     cell.value = "|"
                 } else {
                     cell.modifiable = true
-                    cell.value = EMPTY_STRING
                 }
                 cell
             }
@@ -60,7 +57,7 @@ data class Cell(
     val backgroundColor: AnsiColor,
     val style: AnsiEffect,
     var value: String = EMPTY_STRING,
-    var modifiable: Boolean = true,
+    var modifiable: Boolean = false,
 ) {
     fun render(): String {
         val foregroundSeq = createAnsiSequence(

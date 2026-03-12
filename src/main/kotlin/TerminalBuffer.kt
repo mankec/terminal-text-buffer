@@ -7,7 +7,7 @@ val DEFAULT_FOREGROUND_COLOR = AnsiColor.MAGENTA
 val DEFAULT_BACKGROUND_COLOR = AnsiColor.BLACK
 val DEFAULT_STYLE = AnsiEffect.NONE
 
-const val EMPTY_CHAR = ' '
+const val EMPTY_STRING = " "
 
 
 class TerminalBuffer(
@@ -34,13 +34,13 @@ class TerminalBuffer(
                 )
                 if (rowIdx == 0 || rowIdx == rowCount - 1) {
                     cell.modifiable = false
-                    cell.char = '-'
+                    cell.value = "-"
                 } else if (colIdx == 0 || colIdx == colCount - 1) {
                     cell.modifiable = false
-                    cell.char = '|'
+                    cell.value = "|"
                 } else {
                     cell.modifiable = true
-                    cell.char = EMPTY_CHAR
+                    cell.value = EMPTY_STRING
                 }
                 cell
             }
@@ -59,7 +59,7 @@ data class Cell(
     val foregroundColor: AnsiColor,
     val backgroundColor: AnsiColor,
     val style: AnsiEffect,
-    var char: Char = EMPTY_CHAR,
+    var value: String = EMPTY_STRING,
     var modifiable: Boolean = true,
 ) {
     fun render(): String {
@@ -75,7 +75,7 @@ data class Cell(
             if (!modifiable || style == AnsiEffect.NONE) ""
             else createAnsiSequence(requireNotNull(style.on))
         val resetSeq = "${ANSI_CSI}${AnsiColor.RESET.code}m"
-        return "${backgroundSeq}${foregroundSeq}${styleSeq}${char}${resetSeq}"
+        return "${backgroundSeq}${foregroundSeq}${styleSeq}${value}${resetSeq}"
     }
 
     fun createAnsiSequence(code1: Int, code2: Int? = null): String {

@@ -35,7 +35,7 @@ fun main() {
 0
     println("TERMINAL TEXT BUFFER")
 
-    terminalBuffer.grid.layout.forEach { println(it.joinToString("")) }
+    terminalBuffer.grid.layout.forEach { println(it.joinToString("") { it.char.toString() }) }
 
     while (true) {
     }

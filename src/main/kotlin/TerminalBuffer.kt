@@ -84,6 +84,14 @@ class TerminalBuffer(
         for (ch in chars) { write(ch) }
     }
 
+    fun fill(ch: String = EMPTY_STRING) {
+        val chars = ch.repeat(screen.width).map { it.toString() }
+
+        cursor.moveToStartOfLine()
+        cursor.row = 0
+        for (ch in chars) { write(ch) }
+    }
+
     fun addNewLine() {
         cursor.moveToStartOfLine()
         cursor.row = 0

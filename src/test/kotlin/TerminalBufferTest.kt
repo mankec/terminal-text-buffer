@@ -129,4 +129,25 @@ class TerminalBufferTest {
         expected = "ld"
         assertEquals(expected, thirdRow)
     }
+
+    @Test
+    fun `fill a line with a character (or empty)`() {
+        val text = "Hello"
+        terminal.insert(text)
+
+        var expected = text
+        var firstRow = terminal.screen.lines[0][0].joinToString("") { it.value }
+        assertEquals(expected, firstRow)
+
+        val ch = "|"
+        terminal.fill(ch)
+        expected = ch.repeat(terminal.screen.width)
+        firstRow = terminal.screen.lines[0][0].joinToString("") { it.value }
+        assertEquals(expected, firstRow)
+
+        terminal.fill()
+        expected = EMPTY_STRING.repeat(terminal.screen.width)
+        firstRow = terminal.screen.lines[0][0].joinToString("") { it.value }
+        assertEquals(expected, firstRow)
+    }
 }

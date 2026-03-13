@@ -244,7 +244,7 @@ object Screen {
         return newLine
     }
 
-    fun isLineFrozen(line: MutableList<MutableList<Cell>>): Boolean {
-        return line[0][0].frozen
+    fun isLineFrozen(lineIdx: Int): Boolean {
+        return lines[lineIdx][0][0].frozen
     }
 }

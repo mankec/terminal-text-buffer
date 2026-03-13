@@ -7,15 +7,18 @@ import kotlin.collections.joinToString
 import kotlin.test.BeforeTest
 import kotlin.test.assertContains
 
+const val TEST_WIDTH = 10
+const val TEST_HEIGHT = 5
+const val TEST_SCROLLBACK_MAX_SIZE = 5
+
 
 class TerminalBufferTest {
     lateinit var terminal: TerminalBuffer
-    val pwd = File(".").canonicalPath
 
     private fun setupTerminalBuffer(style: AnsiEffect? = null): TerminalBuffer {
-        val width = DEFAULT_WIDTH
-        val height = DEFAULT_HEIGHT
-        val scrollbackMaxSize = DEFAULT_SCROLLBACK_MAX_SIZE
+        val width = TEST_WIDTH
+        val height = TEST_HEIGHT
+        val scrollbackMaxSize = TEST_SCROLLBACK_MAX_SIZE
         val foregroundColor = DEFAULT_FOREGROUND_COLOR
         val backgroundColor = DEFAULT_BACKGROUND_COLOR
         val style = DEFAULT_STYLE

@@ -399,6 +399,25 @@ class TerminalBufferTest {
     }
 
     @Test
+    fun `get entire content as string`() {
+        val text1 = "Hello there this is a simple sentence"
+        val text2 = " Yet  another   simple  sentence "
+        val text3 = "This sentence is pretty short"
+        val height = 2
+        val terminal = setupTerminalBuffer(height)
+
+        terminal.insert(text1)
+        terminal.enterNewLine()
+        terminal.insert(text2)
+        terminal.enterNewLine()
+        terminal.insert(text3)
+
+        val result = terminal.getEntireContentAsString()
+        val expected = "$text1\n$text2\n$text3"
+        assertEquals(expected, result)
+    }
+
+    @Test
     fun `disallow editing scrollback`() {
         val text1 = "Hello!!!"
         val text2 = "Yes?"

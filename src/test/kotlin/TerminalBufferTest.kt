@@ -163,4 +163,21 @@ class TerminalBufferTest {
         assertEquals(0, terminal.cursor.row)
         assertEquals(0, terminal.cursor.line)
     }
+
+    @Test
+    fun `clear entire screen`() {
+        val text = "Hello"
+        terminal.insert(text)
+        terminal.insertEmptyLineAtBottomOfScreen()
+
+        val firstRow = terminal.screen.lines[0][0].joinToString("") { it.value }
+        assertEquals(text, firstRow)
+        assertEquals(2, terminal.screen.lines.size)
+
+        terminal.clearScreen()
+        assertEquals(0, terminal.screen.lines.size)
+        assertEquals(0, terminal.cursor.col)
+        assertEquals(0, terminal.cursor.row)
+        assertEquals(0, terminal.cursor.line)
+    }
 }

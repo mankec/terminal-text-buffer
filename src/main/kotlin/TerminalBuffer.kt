@@ -95,6 +95,11 @@ class TerminalBuffer(
     fun insertEmptyLineAtBottomOfScreen() {
         screen.createLine()
     }
+
+    fun clearScreen() {
+        screen.lines.clear()
+        cursor.reset()
+    }
 }
 
 

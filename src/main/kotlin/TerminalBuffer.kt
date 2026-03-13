@@ -1,6 +1,5 @@
 package com.example
 
-import jdk.internal.org.jline.terminal.Terminal
 
 const val DEFAULT_WIDTH = 80
 const val DEFAULT_HEIGHT = 24
@@ -106,6 +105,12 @@ class TerminalBuffer(
 
     fun clearScreen() {
         screen.lines.clear()
+        cursor.reset()
+    }
+
+    fun clearAll() {
+        screen.lines.clear()
+        scrollback.lines.clear()
         cursor.reset()
     }
 }

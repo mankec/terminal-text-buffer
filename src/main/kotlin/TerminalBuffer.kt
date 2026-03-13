@@ -162,6 +162,13 @@ class TerminalBuffer(
         }
         return stringifiedLines.joinToString("\n")
     }
+
+    fun getEntireContentAsString(): String {
+        val stringifiedLines = List(screen.lines.size) { idx ->
+            getLineAsString(idx)
+        }
+        return stringifiedLines.joinToString("\n")
+    }
 }
 
 

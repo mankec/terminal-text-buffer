@@ -27,7 +27,6 @@ fun main() {
         else AnsiEffectPrompt.collectUserInput(
             "Choose text style: "
         )
-
     val terminalBuffer = TerminalBuffer(scrollbackMaxSize)
         .setup(width, height, foregroundColor, backgroundColor, style)
 }

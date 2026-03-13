@@ -92,10 +92,8 @@ class TerminalBuffer(
         for (ch in chars) { write(ch) }
     }
 
-    fun addNewLine() {
-        cursor.moveToStartOfLine()
-        cursor.row = 0
-        cursor.line++
+    fun insertEmptyLineAtBottomOfScreen() {
+        screen.createLine()
     }
 }
 

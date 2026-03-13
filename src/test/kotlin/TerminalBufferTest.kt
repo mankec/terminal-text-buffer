@@ -150,4 +150,17 @@ class TerminalBufferTest {
         firstRow = terminal.screen.lines[0][0].joinToString("") { it.value }
         assertEquals(expected, firstRow)
     }
+
+    @Test
+    fun `insert an empty line at the bottom of the screen`() {
+        val text = "Hello"
+        terminal.insert(text)
+        terminal.insertEmptyLineAtBottomOfScreen()
+
+        assertEquals(2, terminal.screen.lines.size)
+        // Cursor position remains unchanged
+        assertEquals(text.length, terminal.cursor.col)
+        assertEquals(0, terminal.cursor.row)
+        assertEquals(0, terminal.cursor.line)
+    }
 }

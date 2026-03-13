@@ -7,6 +7,7 @@ import kotlin.collections.joinToString
 import kotlin.math.exp
 import kotlin.test.BeforeTest
 import kotlin.test.assertContains
+import kotlin.test.assertFailsWith
 
 const val TEST_WIDTH = 10
 const val TEST_HEIGHT = 5
@@ -17,14 +18,14 @@ class TerminalBufferTest {
     lateinit var terminal: TerminalBuffer
 
     private fun setupTerminalBuffer(
-        height: Int? = null, scrollbackMaxSize: Int? = null
+        height: Int? = null, scrollbackMaxSize: Int? = null, style: AnsiEffect? = null
     ): TerminalBuffer {
         val width = TEST_WIDTH
         val height = height ?: TEST_HEIGHT
         val scrollbackMaxSize = scrollbackMaxSize ?: TEST_SCROLLBACK_MAX_SIZE
         val foregroundColor = DEFAULT_FOREGROUND_COLOR
         val backgroundColor = DEFAULT_BACKGROUND_COLOR
-        val style = DEFAULT_STYLE
+        val style = style ?: DEFAULT_STYLE
         val terminalBuffer = TerminalBuffer(scrollbackMaxSize)
             .setup(width, height, foregroundColor, backgroundColor, style)
         return terminalBuffer
@@ -278,5 +279,75 @@ class TerminalBufferTest {
         assertEquals(0, terminal.cursor.col)
         assertEquals(0, terminal.cursor.row)
         assertEquals(0, terminal.cursor.line)
+    }
+
+    @Test
+    fun `store both screen and scrollback lines in read only mode`() {
+        val text1 = "Hello!!!"
+        val text2 = "Yes?"
+        val height = 1
+        val scrollbackMaxSize = 1
+        val terminal = setupTerminalBuffer(height, scrollbackMaxSize)
+
+        terminal.insert(text1)
+        terminal.enterNewLine()
+        terminal.insert(text2)
+
+        assertEquals(2, terminal.lines.size)
+
+        val firstLine =
+            terminal.lines[0][0].joinToString("") { it.value }
+        assertEquals(text1, firstLine)
+
+        val secondLine =
+            terminal.lines[1][0].joinToString("") { it.value }
+        assertEquals(text2, secondLine)
+
+    }
+
+    @Test
+    fun `get attributes at position (from screen and scrollback)`() {
+        val text1 = "Hello!!!       Match this -> A"
+        val text2 = "Yes?"
+        val height = 1
+        val scrollbackMaxSize = 1
+        val style = AnsiEffect.UNDERLINE
+        val terminal = setupTerminalBuffer(height, scrollbackMaxSize, style)
+
+        terminal.insert(text1)
+        terminal.enterNewLine()
+        terminal.insert(text2)
+
+        // From scrollback
+        var line = 0
+        var expectedValue = "A"
+        var col = text1.indexOf(expectedValue)
+        var cellFg = terminal.getAttrFromPosition("fg", col, line)
+        var cellBg = terminal.getAttrFromPosition("bg", col, line)
+        var cellStyle = terminal.getAttrFromPosition("style", col, line)
+        var cellValue = terminal.getAttrFromPosition("val", col, line)
+        assertEquals(DEFAULT_FOREGROUND_COLOR, cellFg)
+        assertEquals(DEFAULT_BACKGROUND_COLOR, cellBg)
+        assertEquals(AnsiEffect.UNDERLINE, cellStyle)
+        assertEquals(expectedValue, cellValue)
+
+        // From screen
+        line = 1
+        expectedValue = "?"
+        col = text2.indexOf(expectedValue)
+        cellFg = terminal.getAttrFromPosition("fg", col, line)
+        cellBg = terminal.getAttrFromPosition("bg", col, line)
+        cellStyle = terminal.getAttrFromPosition("style", col, line)
+        cellValue = terminal.getAttrFromPosition("val", col, line)
+        assertEquals(DEFAULT_FOREGROUND_COLOR, cellFg)
+        assertEquals(DEFAULT_BACKGROUND_COLOR, cellBg)
+        assertEquals(AnsiEffect.UNDERLINE, cellStyle)
+        assertEquals(expectedValue, cellValue)
+
+        val invalid = "invalid"
+        val exception = assertFailsWith<RuntimeException> {
+            terminal.getAttrFromPosition("invalid", col, line)
+        }
+        assertEquals("Unknown attribute: $invalid", exception.message)
     }
 }

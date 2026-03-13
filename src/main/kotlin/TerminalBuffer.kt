@@ -17,6 +17,7 @@ class TerminalBuffer(
     lateinit var screen: Screen
     lateinit var scrollback: Scrollback
     lateinit var cursor: Cursor
+    lateinit var lines: MutableList<List<List<Cell>>>
 
     fun setup(
         width: Int,
@@ -25,6 +26,7 @@ class TerminalBuffer(
         backgroundColor: AnsiColor,
         style: AnsiEffect,
     ): TerminalBuffer {
+        lines = mutableListOf()
         screen = Screen.init(
             this, width, height, foregroundColor, backgroundColor, style
         )
@@ -57,6 +59,7 @@ class TerminalBuffer(
         } else {
             cursor.col++
         }
+        sync()
     }
 
     fun insert(text: String) {
@@ -112,6 +115,47 @@ class TerminalBuffer(
         screen.lines.clear()
         scrollback.lines.clear()
         cursor.reset()
+    }
+
+    fun addLine(line: List<List<Cell>>) {
+        lines.add(line)
+    }
+
+    fun sync() {
+        // Sync is only called if cell is modifiable
+        val lineIdx = scrollback.lines.size + cursor.line
+        val frozen = freezeLine(screen.lines[cursor.line])
+        lines[lineIdx] = frozen
+    }
+
+    fun getAttrFromPosition(attr: String, col: Int, line: Int): Any {
+        val line = lines[line]
+        val flattenedRows = line.flatten()
+        val cell = flattenedRows[col]
+
+        when (attr) {
+            "fg" -> {
+                return cell.foregroundColor
+            }
+            "bg" -> {
+                return cell.backgroundColor
+            }
+            "style" -> {
+                return cell.style
+            }
+            "val" -> {
+                return cell.value
+            }
+            else -> {
+                throw RuntimeException("Unknown attribute: $attr")
+            }
+        }
+    }
+
+    fun freezeLine(
+        line: MutableList<MutableList<Cell>>
+    ): List<List<Cell>> {
+        return line.map { it.toList().map { it.modifiable = false; it } }.toList()
     }
 }
 
@@ -185,7 +229,9 @@ object Screen {
 
     fun createLine(): MutableList<MutableList<Cell>> {
         val newLine = mutableListOf<MutableList<Cell>>()
+        val frozen = terminal.freezeLine(newLine)
         lines.add(newLine)
+        terminal.addLine(frozen)
         if (lines.size > height) {
             terminal.cursor.line--
             moveFirstLineToScrollback()
@@ -194,9 +240,9 @@ object Screen {
     }
 
     private fun moveFirstLineToScrollback() {
-        val immutableLine = lines[0].map { it.toList() }.toList()
-        lines.removeFirst()
-        terminal.scrollback.addLine(immutableLine)
+        val line = lines.removeFirst()
+        val frozen = terminal.freezeLine(line)
+        terminal.scrollback.addLine(frozen)
     }
 }
 

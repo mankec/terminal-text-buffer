@@ -1,9 +1,8 @@
 package com.example
 
-
-const val DEFAULT_WIDTH = 10
-const val DEFAULT_HEIGHT = 5
-const val DEFAULT_SCROLLBACK_MAX_SIZE = 5
+const val DEFAULT_WIDTH = 80
+const val DEFAULT_HEIGHT = 24
+const val DEFAULT_SCROLLBACK_MAX_SIZE = 100
 val DEFAULT_FOREGROUND_COLOR = AnsiColor.MAGENTA
 val DEFAULT_BACKGROUND_COLOR = AnsiColor.BLACK
 val DEFAULT_STYLE = AnsiEffect.NONE
@@ -35,30 +34,64 @@ class TerminalBuffer(
     }
 
     fun write(ch: String) {
-        var cell: Cell?
-        val maxCol = screen.width - 1
-        val line = screen.lines.getOrNull(cursor.row)
-
-        if (line != null) {
-            cell = line.getOrNull(cursor.col)
-            if (cell != null) {
-                cell.value = ch
-            } else {
-                cell = Screen.createCell(ch)
-                line.add(cell)
-            }
-            line[cursor.col] = cell
-        } else {
-            cell = Screen.createCell(ch)
-            screen.lines.add(mutableListOf(cell))
+        val line = screen.lines.getOrElse(cursor.line) {
+            screen.createLine()
         }
+        val lineRow =
+            line.getOrElse(cursor.row) {
+                val newRow = mutableListOf<Cell>()
+                line.add(newRow)
+                newRow
+            }
+        val cell = lineRow.getOrElse(cursor.col) {
+            val newCell = Screen.createCell()
+            lineRow.add(newCell)
+            newCell
+        }
+        cell.value = ch
 
-        if (cursor.col == maxCol) {
+        if (cursor.col == screen.eolIdx) {
+            cursor.moveToStartOfLine()
             cursor.row++
-            cursor.col = 0
         } else {
             cursor.col++
         }
+    }
+
+    fun insert(text: String) {
+        var chars: List<String>
+        val line = screen.lines.getOrNull(cursor.line)
+        if (line == null) {
+            chars = text.map { it.toString() }
+        } else {
+            val moveFor = text.length
+            val currentLine = cursor.row
+            val currentCol = cursor.col
+
+            var moveText = ""
+            val wrap = cursor.col + text.length > screen.eolIdx
+            if (wrap) {
+                line.subList(cursor.row, line.size)
+                    .mapIndexed { rowIdx, row ->
+                        moveText +=
+                            if (rowIdx == 0) {
+                                row.subList(cursor.col, row.size)
+                                    .joinToString(separator = "") { it.value }
+                            } else {
+                                row.joinToString(separator = "") { it.value }
+                            }
+                    }
+            }
+            val insertText = text + moveText
+            chars = insertText.map { it.toString() }
+        }
+        for (ch in chars) { write(ch) }
+    }
+
+    fun addNewLine() {
+        cursor.moveToStartOfLine()
+        cursor.row = 0
+        cursor.line++
     }
 }
 
@@ -95,10 +128,12 @@ data class Cell(
 object Screen {
     var width: Int = 0
     var height: Int = 0
+    var eolIdx: Int = 0
     lateinit var foregroundColor: AnsiColor
     lateinit var backgroundColor: AnsiColor
     lateinit var style: AnsiEffect
-    lateinit var lines: MutableList<MutableList<Cell>>
+    // Line can have multiple rows in case wrapping happens
+    lateinit var lines: MutableList<MutableList<MutableList<Cell>>>
 
     fun init(
         width: Int,
@@ -109,6 +144,7 @@ object Screen {
     ): Screen {
         this.width = width
         this.height = height
+        this.eolIdx = width - 1
         this.foregroundColor = foregroundColor
         this.backgroundColor = backgroundColor
         this.style = style
@@ -116,15 +152,19 @@ object Screen {
         return this
     }
 
-    fun createCell(
-        value: String = EMPTY_STRING, modifiable: Boolean = false
-    ): Cell = Cell(
+    fun createCell(): Cell = Cell(
         foregroundColor,
         backgroundColor,
         style,
-        value,
-        modifiable,
+        EMPTY_STRING,
+        false,
     )
+
+    fun createLine(): MutableList<MutableList<Cell>> {
+        val newLine = mutableListOf<MutableList<Cell>>()
+        lines.add(newLine)
+        return newLine
+    }
 }
 
 

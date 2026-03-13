@@ -1,16 +1,11 @@
 package com.example
 
-import com.example.Cursor.line
-import com.example.Screen.style
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
-import java.awt.SystemColor.text
-import java.io.File
 import kotlin.collections.joinToString
-import kotlin.math.exp
 import kotlin.test.BeforeTest
-import kotlin.test.assertContains
 import kotlin.test.assertFailsWith
+
 
 const val TEST_WIDTH = 10
 const val TEST_HEIGHT = 5
@@ -179,13 +174,14 @@ class TerminalBufferTest {
         terminal.insert(text3)
         assertEquals(3, screen.lines.size)
 
+        // Scrollback
+        val lineIdx = 0
         val scrollbackFirstLineRow =
-            terminal.screen.lines[0][0].joinToString("") { it.value }
+            terminal.screen.lines[lineIdx][0].joinToString("") { it.value }
         assertEquals(text1, scrollbackFirstLineRow)
-        assertTrue(
-            screen.isLineFrozen(screen.lines[0])
-        )
+        assertTrue(screen.isLineFrozen(lineIdx))
 
+        // Screen
         screenFirstLineRow = screen.lines[1][0].joinToString("") { it.value }
         assertEquals(text2, screenFirstLineRow)
         screenSecondLineRow = screen.lines[2][0].joinToString("") { it.value }
@@ -363,7 +359,7 @@ class TerminalBufferTest {
         // Scrollback
         var lineIdx = 0
         val result1 = terminal.getLineAsString(lineIdx)
-        assertTrue(screen.isLineFrozen(screen.lines[lineIdx]))
+        assertTrue(screen.isLineFrozen(lineIdx))
         assertEquals(text1, result1)
 
         // Screen
@@ -393,11 +389,12 @@ class TerminalBufferTest {
         val newText1 = "Hey!"
         terminal.insert(newText1)
 
+        var lineIdx = 0
         val scrollbackFirstLineRow =
-            screen.lines[0][0].joinToString("") { it.value }
+            screen.lines[lineIdx][0].joinToString("") { it.value }
         print(scrollbackFirstLineRow)
         assertEquals(text1, scrollbackFirstLineRow)
-        assertTrue(screen.isLineFrozen(screen.lines[0]))
+        assertTrue(screen.isLineFrozen(lineIdx))
 
         cursor.moveToStartOfLine()
         cursor.row = 0
@@ -405,9 +402,10 @@ class TerminalBufferTest {
         val newText2 = "Yes?????"
         terminal.insert(newText2)
 
+        lineIdx++
         val screenFirstLineRow =
-            screen.lines[1][0].joinToString("") { it.value }
+            screen.lines[lineIdx][0].joinToString("") { it.value }
         assertEquals(newText2, screenFirstLineRow)
-        assertFalse(screen.isLineFrozen(screen.lines[1]))
+        assertFalse(screen.isLineFrozen(lineIdx))
     }
 }

@@ -15,9 +15,7 @@ class TerminalBuffer(
     val scrollbackMaxSize: Int,
 ) {
     lateinit var screen: Screen
-    lateinit var scrollback: Scrollback
     lateinit var cursor: Cursor
-    lateinit var lines: MutableList<List<List<Cell>>>
 
     fun setup(
         width: Int,
@@ -26,11 +24,15 @@ class TerminalBuffer(
         backgroundColor: AnsiColor,
         style: AnsiEffect,
     ): TerminalBuffer {
-        lines = mutableListOf()
         screen = Screen.init(
-            this, width, height, foregroundColor, backgroundColor, style
+            this,
+            width,
+            height,
+            scrollbackMaxSize,
+            foregroundColor,
+            backgroundColor,
+            style,
         )
-        scrollback = Scrollback.init(width, height, scrollbackMaxSize)
         cursor = Cursor
 
         return this
@@ -51,6 +53,10 @@ class TerminalBuffer(
             lineRow.add(newCell)
             newCell
         }
+
+        if (cell.frozen)
+            return
+
         cell.value = ch
 
         if (cursor.col == screen.eolIdx) {
@@ -59,7 +65,6 @@ class TerminalBuffer(
         } else {
             cursor.col++
         }
-        sync()
     }
 
     fun insert(text: String) {
@@ -107,29 +112,17 @@ class TerminalBuffer(
     }
 
     fun clearScreen() {
-        screen.lines.clear()
+        screen.lines.removeIf { !it[0][0].frozen }
         cursor.reset()
     }
 
     fun clearAll() {
         screen.lines.clear()
-        scrollback.lines.clear()
         cursor.reset()
     }
 
-    fun addLine(line: List<List<Cell>>) {
-        lines.add(line)
-    }
-
-    fun sync() {
-        // Sync is only called if cell is modifiable
-        val lineIdx = scrollback.lines.size + cursor.line
-        val frozen = freezeLine(screen.lines[cursor.line])
-        lines[lineIdx] = frozen
-    }
-
     fun getAttrFromPosition(attr: String, col: Int, line: Int): Any {
-        val line = lines[line]
+        val line = screen.lines[line]
         val flattenedRows = line.flatten()
         val cell = flattenedRows[col]
 
@@ -151,12 +144,6 @@ class TerminalBuffer(
             }
         }
     }
-
-    fun freezeLine(
-        line: MutableList<MutableList<Cell>>
-    ): List<List<Cell>> {
-        return line.map { it.toList().map { it.modifiable = false; it } }.toList()
-    }
 }
 
 
@@ -165,7 +152,7 @@ data class Cell(
     val backgroundColor: AnsiColor,
     val style: AnsiEffect,
     var value: String = EMPTY_STRING,
-    var modifiable: Boolean = false,
+    var frozen: Boolean = false,
 ) {
     fun render(): String {
         val foregroundSeq = createAnsiSequence(
@@ -177,7 +164,7 @@ data class Cell(
             backgroundColor.code
         )
         val styleSeq =
-            if (!modifiable || style == AnsiEffect.NONE) ""
+            if (!frozen || style == AnsiEffect.NONE) ""
             else createAnsiSequence(requireNotNull(style.on))
         val resetSeq = "${ANSI_CSI}${AnsiColor.RESET.code}m"
         return "${backgroundSeq}${foregroundSeq}${styleSeq}${value}${resetSeq}"
@@ -193,6 +180,7 @@ object Screen {
     lateinit var terminal: TerminalBuffer
     var width: Int = 0
     var height: Int = 0
+    var scrollbackMaxSize = 0
     var eolIdx: Int = 0
     lateinit var foregroundColor: AnsiColor
     lateinit var backgroundColor: AnsiColor
@@ -204,6 +192,7 @@ object Screen {
         terminal: TerminalBuffer,
         width: Int,
         height: Int,
+        scrollbackMaxSize: Int,
         foregroundColor: AnsiColor,
         backgroundColor: AnsiColor,
         style: AnsiEffect,
@@ -211,6 +200,7 @@ object Screen {
         this.terminal = terminal
         this.width = width
         this.height = height
+        this.scrollbackMaxSize = scrollbackMaxSize
         this.eolIdx = width - 1
         this.foregroundColor = foregroundColor
         this.backgroundColor = backgroundColor
@@ -228,38 +218,27 @@ object Screen {
     )
 
     fun createLine(): MutableList<MutableList<Cell>> {
-        val newLine = mutableListOf<MutableList<Cell>>()
-        val frozen = terminal.freezeLine(newLine)
+        val cell = createCell()
+        val newLine = mutableListOf(mutableListOf(cell))
         lines.add(newLine)
-        terminal.addLine(frozen)
-        if (lines.size > height) {
-            terminal.cursor.line--
-            moveFirstLineToScrollback()
+
+        val nonFrozenLines = lines.filter { !it[0][0].frozen }
+        if (nonFrozenLines.size > height) {
+            nonFrozenLines[0].forEach { row ->
+                row.forEach { it.frozen = true }
+            }
         }
+
+        val frozenLines = lines.filter { it[0][0].frozen }.toMutableList()
+        if (frozenLines.size > scrollbackMaxSize) {
+            lines.remove(frozenLines[0])
+            terminal.cursor.line--
+        }
+
         return newLine
     }
 
-    private fun moveFirstLineToScrollback() {
-        val line = lines.removeFirst()
-        val frozen = terminal.freezeLine(line)
-        terminal.scrollback.addLine(frozen)
-    }
-}
-
-
-object Scrollback {
-    var maxSize: Int = 0
-    lateinit var lines: MutableList<List<List<Cell>>>
-
-    fun init(width: Int, height: Int, maxSize: Int): Scrollback {
-        this.maxSize = maxSize
-        this.lines = mutableListOf()
-        return this
-    }
-
-    fun addLine(line: List<List<Cell>>) {
-        lines.add(line)
-        if (lines.size > maxSize)
-            lines.removeFirst()
+    fun isLineFrozen(line: MutableList<MutableList<Cell>>): Boolean {
+        return line[0][0].frozen
     }
 }

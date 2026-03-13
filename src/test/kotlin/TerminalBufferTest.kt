@@ -15,7 +15,7 @@ const val TEST_SCROLLBACK_MAX_SIZE = 5
 class TerminalBufferTest {
     lateinit var terminal: TerminalBuffer
 
-    private fun setupTerminalBuffer(
+    private fun setupTerminal(
         height: Int? = null, scrollbackMaxSize: Int? = null, style: AnsiEffect? = null
     ): TerminalBuffer {
         val width = TEST_WIDTH
@@ -34,7 +34,7 @@ class TerminalBufferTest {
         Cursor.row = 0
         Cursor.col = 0
         Cursor.line = 0
-        terminal = setupTerminalBuffer()
+        terminal = setupTerminal()
     }
 
     @Test
@@ -155,7 +155,7 @@ class TerminalBufferTest {
     @Test
     fun `move oldest line to scrollback if line count exceeds screen height`() {
         val height = 2
-        val terminal = setupTerminalBuffer(height)
+        val terminal = setupTerminal(height)
         val text1 = "Hello!"
         val text2 = "Hello!!"
         val text3 = "Hello!!!"
@@ -192,7 +192,7 @@ class TerminalBufferTest {
     fun `remove oldest line from scrollback if scrollback max capacity is exceeded`() {
         val height = 1
         val scrollbackMaxSize = 1
-        val terminal = setupTerminalBuffer(height, scrollbackMaxSize)
+        val terminal = setupTerminal(height, scrollbackMaxSize)
         val text1 = "Hello!"
         val text2 = "Hello!!"
         val text3 = "Hello!!!"
@@ -239,7 +239,7 @@ class TerminalBufferTest {
     fun `clear screen`() {
         val height = 1
         val scrollbackMaxSize = 1
-        val terminal = setupTerminalBuffer(height, scrollbackMaxSize)
+        val terminal = setupTerminal(height, scrollbackMaxSize)
         val text1 = "Hello!"
         val text2 = "Hello!!"
 
@@ -273,7 +273,7 @@ class TerminalBufferTest {
     fun `clear all (screen and scrollback)`() {
         val height = 1
         val scrollbackMaxSize = 1
-        val terminal = setupTerminalBuffer(height, scrollbackMaxSize)
+        val terminal = setupTerminal(height, scrollbackMaxSize)
         val text1 = "Hello!"
         val text2 = "Hello!!"
 
@@ -304,7 +304,7 @@ class TerminalBufferTest {
         val height = 1
         val scrollbackMaxSize = 1
         val style = AnsiEffect.UNDERLINE
-        val terminal = setupTerminalBuffer(height, scrollbackMaxSize, style)
+        val terminal = setupTerminal(height, scrollbackMaxSize, style)
 
         terminal.insert(text1)
         terminal.enterNewLine()
@@ -349,7 +349,7 @@ class TerminalBufferTest {
         val text2 = " Yet  another   simple  sentence "
         val height = 1
         val scrollbackMaxSize = 1
-        val terminal = setupTerminalBuffer(height, scrollbackMaxSize)
+        val terminal = setupTerminal(height, scrollbackMaxSize)
         val screen = terminal.screen
 
         terminal.insert(text1)
@@ -385,7 +385,7 @@ class TerminalBufferTest {
         val text2 = " Yet  another   simple  sentence "
         val text3 = "This sentence is pretty short"
         val height = 2
-        val terminal = setupTerminalBuffer(height)
+        val terminal = setupTerminal(height)
 
         terminal.insert(text1)
         terminal.enterNewLine()
@@ -404,7 +404,7 @@ class TerminalBufferTest {
         val text2 = " Yet  another   simple  sentence "
         val text3 = "This sentence is pretty short"
         val height = 2
-        val terminal = setupTerminalBuffer(height)
+        val terminal = setupTerminal(height)
 
         terminal.insert(text1)
         terminal.enterNewLine()
@@ -423,7 +423,7 @@ class TerminalBufferTest {
         val text2 = "Yes?"
         val height = 1
         val scrollbackMaxSize = 1
-        val terminal = setupTerminalBuffer(height, scrollbackMaxSize)
+        val terminal = setupTerminal(height, scrollbackMaxSize)
         val screen = terminal.screen
         val cursor = terminal.cursor
 
@@ -463,7 +463,7 @@ class TerminalBufferTest {
         val text2 = "Yes?"
         val text3 = "I don't know maybe"
         val height = 1
-        val terminal = setupTerminalBuffer(height)
+        val terminal = setupTerminal(height)
         val screen = terminal.screen
         val cursor = terminal.cursor
 

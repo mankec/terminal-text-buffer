@@ -1,5 +1,7 @@
 package com.example
 
+import jdk.internal.org.jline.terminal.Terminal
+
 const val DEFAULT_WIDTH = 80
 const val DEFAULT_HEIGHT = 24
 const val DEFAULT_SCROLLBACK_MAX_SIZE = 100
@@ -25,7 +27,7 @@ class TerminalBuffer(
         style: AnsiEffect,
     ): TerminalBuffer {
         screen = Screen.init(
-            width, height, foregroundColor, backgroundColor, style
+            this, width, height, foregroundColor, backgroundColor, style
         )
         scrollback = Scrollback.init(width, height, scrollbackMaxSize)
         cursor = Cursor
@@ -92,6 +94,12 @@ class TerminalBuffer(
         for (ch in chars) { write(ch) }
     }
 
+    fun enterNewLine() {
+        cursor.moveToStartOfLine()
+        cursor.row = 0
+        cursor.line++
+    }
+
     fun insertEmptyLineAtBottomOfScreen() {
         screen.createLine()
     }
@@ -133,6 +141,7 @@ data class Cell(
 
 
 object Screen {
+    lateinit var terminal: TerminalBuffer
     var width: Int = 0
     var height: Int = 0
     var eolIdx: Int = 0
@@ -143,12 +152,14 @@ object Screen {
     lateinit var lines: MutableList<MutableList<MutableList<Cell>>>
 
     fun init(
+        terminal: TerminalBuffer,
         width: Int,
         height: Int,
         foregroundColor: AnsiColor,
         backgroundColor: AnsiColor,
         style: AnsiEffect,
     ): Screen {
+        this.terminal = terminal
         this.width = width
         this.height = height
         this.eolIdx = width - 1
@@ -170,20 +181,34 @@ object Screen {
     fun createLine(): MutableList<MutableList<Cell>> {
         val newLine = mutableListOf<MutableList<Cell>>()
         lines.add(newLine)
+        if (lines.size > height) {
+            terminal.cursor.line--
+            moveFirstLineToScrollback()
+        }
         return newLine
+    }
+
+    private fun moveFirstLineToScrollback() {
+        val immutableLine = lines[0].map { it.toList() }.toList()
+        lines.removeFirst()
+        terminal.scrollback.addLine(immutableLine)
     }
 }
 
 
 object Scrollback {
-    var width: Int = 0
-    var height: Int = 0
     var maxSize: Int = 0
+    lateinit var lines: MutableList<List<List<Cell>>>
 
     fun init(width: Int, height: Int, maxSize: Int): Scrollback {
-        this.width = width
-        this.height = height
         this.maxSize = maxSize
+        this.lines = mutableListOf()
         return this
+    }
+
+    fun addLine(line: List<List<Cell>>) {
+        lines.add(line)
+        if (lines.size > maxSize)
+            lines.removeFirst()
     }
 }

@@ -16,10 +16,12 @@ const val TEST_SCROLLBACK_MAX_SIZE = 5
 class TerminalBufferTest {
     lateinit var terminal: TerminalBuffer
 
-    private fun setupTerminalBuffer(style: AnsiEffect? = null): TerminalBuffer {
+    private fun setupTerminalBuffer(
+        height: Int? = null, scrollbackMaxSize: Int? = null
+    ): TerminalBuffer {
         val width = TEST_WIDTH
-        val height = TEST_HEIGHT
-        val scrollbackMaxSize = TEST_SCROLLBACK_MAX_SIZE
+        val height = height ?: TEST_HEIGHT
+        val scrollbackMaxSize = scrollbackMaxSize ?: TEST_SCROLLBACK_MAX_SIZE
         val foregroundColor = DEFAULT_FOREGROUND_COLOR
         val backgroundColor = DEFAULT_BACKGROUND_COLOR
         val style = DEFAULT_STYLE
@@ -149,6 +151,73 @@ class TerminalBufferTest {
         expected = EMPTY_STRING.repeat(terminal.screen.width)
         firstRow = terminal.screen.lines[0][0].joinToString("") { it.value }
         assertEquals(expected, firstRow)
+    }
+
+    @Test
+    fun `move oldest line to scrollback if line count exceeds screen height`() {
+        val height = 2
+        val terminal = setupTerminalBuffer(height)
+        val text1 = "Hello!"
+        val text2 = "Hello!!"
+        val text3 = "Hello!!!"
+
+        terminal.insert(text1)
+        terminal.enterNewLine()
+        terminal.insert(text2)
+
+        val screen = terminal.screen
+        var firstLineRow = screen.lines[0][0].joinToString("") { it.value }
+        var secondLineRow = screen.lines[1][0].joinToString("") { it.value }
+        assertEquals(text1, firstLineRow)
+        assertEquals(text2, secondLineRow)
+
+        terminal.enterNewLine()
+        terminal.insert(text3)
+        assertEquals(2, screen.lines.size)
+
+        firstLineRow = screen.lines[0][0].joinToString("") { it.value }
+        secondLineRow = screen.lines[1][0].joinToString("") { it.value }
+        assertEquals(text2, firstLineRow)
+        assertEquals(text3, secondLineRow)
+
+        val scrollbackFirstLineRow =
+            terminal.scrollback.lines[0][0].joinToString("") { it.value }
+        assertEquals(text1, scrollbackFirstLineRow)
+    }
+
+    @Test
+    fun `remove oldest line from scrollback if scrollback max capacity is exceeded`() {
+        val height = 1
+        val scrollbackMaxSize = 1
+        val terminal = setupTerminalBuffer(height, scrollbackMaxSize)
+        val text1 = "Hello!"
+        val text2 = "Hello!!"
+        val text3 = "Hello!!!"
+
+        terminal.insert(text1)
+        terminal.enterNewLine()
+        terminal.insert(text2)
+
+        val screen = terminal.screen
+        val scrollback = terminal.scrollback
+        var firstLineRow = screen.lines[0][0].joinToString("") { it.value }
+        assertEquals(text2, firstLineRow)
+
+        var scrollbackFirstLineRow =
+            scrollback.lines[0][0].joinToString("") { it.value }
+        assertEquals(text1, scrollbackFirstLineRow)
+
+        terminal.enterNewLine()
+        terminal.insert(text3)
+        assertEquals(1, screen.lines.size)
+        assertEquals(1, scrollback.lines.size)
+
+        firstLineRow = screen.lines[0][0].joinToString("") { it.value }
+        assertEquals(text3, firstLineRow)
+
+        scrollbackFirstLineRow =
+            scrollback.lines[0][0].joinToString("") { it.value }
+        assertEquals(text2, scrollbackFirstLineRow)
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.example
 
+import com.example.Cursor.line
+import com.example.Screen.style
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import java.awt.SystemColor.text
@@ -343,6 +345,31 @@ class TerminalBufferTest {
             terminal.getAttrFromPosition("invalid", col, line)
         }
         assertEquals("Unknown attribute: $invalid", exception.message)
+    }
+
+    @Test
+    fun `get line as string (from screen and scrollback)`() {
+        val text1 = "Hello there this is a simple sentence"
+        val text2 = " Yet  another   simple  sentence "
+        val height = 1
+        val scrollbackMaxSize = 1
+        val terminal = setupTerminalBuffer(height, scrollbackMaxSize)
+        val screen = terminal.screen
+
+        terminal.insert(text1)
+        terminal.enterNewLine()
+        terminal.insert(text2)
+
+        // Scrollback
+        var lineIdx = 0
+        val result1 = terminal.getLineAsString(lineIdx)
+        assertTrue(screen.isLineFrozen(screen.lines[lineIdx]))
+        assertEquals(text1, result1)
+
+        // Screen
+        lineIdx++
+        val result2 = terminal.getLineAsString(lineIdx)
+        assertEquals(text2, result2)
     }
 
     @Test

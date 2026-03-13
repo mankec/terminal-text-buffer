@@ -1,8 +1,8 @@
 package com.example
 
 
-const val DEFAULT_WIDTH = 80
-const val DEFAULT_HEIGHT = 24
+const val DEFAULT_WIDTH = 20
+const val DEFAULT_HEIGHT = 3
 const val DEFAULT_SCROLLBACK_MAX_SIZE = 100
 val DEFAULT_FOREGROUND_COLOR = AnsiColor.MAGENTA
 val DEFAULT_BACKGROUND_COLOR = AnsiColor.BLACK
@@ -173,8 +173,8 @@ class TerminalBuffer(
 
 
 data class Cell(
-    val foregroundColor: AnsiColor,
-    val backgroundColor: AnsiColor,
+    var foregroundColor: AnsiColor,
+    var backgroundColor: AnsiColor,
     val style: AnsiEffect,
     var value: String = EMPTY_STRING,
     var frozen: Boolean = false,

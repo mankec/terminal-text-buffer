@@ -4,6 +4,7 @@ package com.example
 object Cursor {
     var row: Int = 0
     var col: Int = 0
+    var line: Int = 0
 
     // "$ESC[${n}A"
     fun moveUp(n: Int) { row -= n }

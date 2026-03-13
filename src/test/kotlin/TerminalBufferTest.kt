@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import java.io.File
 import kotlin.collections.joinToString
+import kotlin.math.exp
 import kotlin.test.BeforeTest
 import kotlin.test.assertContains
 
@@ -31,6 +32,7 @@ class TerminalBufferTest {
     fun setUp() {
         Cursor.row = 0
         Cursor.col = 0
+        Cursor.line = 0
         terminal = setupTerminalBuffer()
     }
 
@@ -41,14 +43,14 @@ class TerminalBufferTest {
 
         val screen = terminal.screen
         val cursor = terminal.cursor
-        val firstLine = screen.lines[0].joinToString("") { it.value }
-        val secondLine = screen.lines[1].joinToString("") { it.value }
+        val firstRow = screen.lines[0][0].joinToString("") { it.value }
+        val secondRow = screen.lines[0][1].joinToString("") { it.value }
 
         var expected = "Hello worl"
-        assertEquals(expected, firstLine)
+        assertEquals(expected, firstRow)
 
         expected = "d"
-        assertEquals(expected, secondLine)
+        assertEquals(expected, secondRow)
         assertEquals(expected.length, cursor.col)
     }
 
@@ -62,8 +64,69 @@ class TerminalBufferTest {
         val newText = "Greetings"
         for (ch in newText.map { it.toString() }) { terminal.write(ch) }
 
-        val line = terminal.screen.lines[0].joinToString("") { it.value }
-        assertEquals(newText, line)
+        val row = terminal.screen.lines[0][0].joinToString("") { it.value }
+        assertEquals(newText, row)
         assertEquals(newText.length, cursor.col)
+    }
+
+    @Test
+    fun `insert text on new line`() {
+        val text = "Hello"
+        terminal.insert(text)
+
+        val row = terminal.screen.lines[0][0].joinToString("") { it.value }
+        assertEquals(text, row)
+    }
+
+    @Test
+    fun `insert text without spaces between existing content`() {
+        val hello = "Hello"
+        val text = "$hello world"
+        for (ch in text.map { it.toString() }) { terminal.write(ch) }
+
+        val cursor = terminal.cursor
+        cursor.moveToStartOfLine()
+        cursor.row = 0
+        cursor.moveRight(hello.length)
+
+        val newText = "greetings"
+        terminal.insert(newText)
+
+        val firstRow = terminal.screen.lines[0][0].joinToString("") { it.value }
+        val secondRow = terminal.screen.lines[0][1].joinToString("") { it.value }
+
+        var expected = "Hellogreet"
+        assertEquals(expected, firstRow)
+
+        expected = "ings world"
+        assertEquals(expected, secondRow)
+    }
+
+    @Test
+    fun `insert text with spaces between existing content`() {
+        val hello = "Hello"
+        val text = "$hello world"
+        for (ch in text.map { it.toString() }) { terminal.write(ch) }
+
+        val cursor = terminal.cursor
+        cursor.moveToStartOfLine()
+        cursor.row = 0
+        cursor.moveRight(hello.length)
+
+        val newText = " greetings "
+        terminal.insert(newText)
+
+        val firstRow = terminal.screen.lines[0][0].joinToString("") { it.value }
+        val secondRow = terminal.screen.lines[0][1].joinToString("") { it.value }
+        val thirdRow = terminal.screen.lines[0][2].joinToString("") { it.value }
+
+        var expected = "Hello gree"
+        assertEquals(expected, firstRow)
+
+        expected = "tings  wor"
+        assertEquals(expected, secondRow)
+
+        expected = "ld"
+        assertEquals(expected, thirdRow)
     }
 }

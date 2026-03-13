@@ -121,8 +121,8 @@ class TerminalBuffer(
         cursor.reset()
     }
 
-    fun getAttrFromPosition(attr: String, col: Int, line: Int): Any {
-        val line = screen.lines[line]
+    fun getAttrFromPosition(attr: String, col: Int, lineIdx: Int): Any {
+        val line = screen.lines[lineIdx]
         val flattenedRows = line.flatten()
         val cell = flattenedRows[col]
 
@@ -143,6 +143,12 @@ class TerminalBuffer(
                 throw RuntimeException("Unknown attribute: $attr")
             }
         }
+    }
+
+    fun getLineAsString(lineIdx: Int): String {
+        val line = screen.lines[lineIdx]
+        val flattenedRows = line.flatten()
+        return flattenedRows.joinToString(separator = "") { it.value }
     }
 }
 

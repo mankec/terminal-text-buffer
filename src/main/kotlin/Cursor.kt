@@ -2,11 +2,17 @@ package com.example
 
 
 object Cursor {
-    var col: Int = 0
     var row: Int = 0
+    var col: Int = 0
 
-    fun moveUp(n: Int) = "${ANSI_CSI}${n}A"
-    fun moveDown(n: Int) = "${ANSI_CSI}${n}B"
-    fun moveRight(n: Int) = "${ANSI_CSI}${n}C"
-    fun moveLeft(n: Int) = "${ANSI_CSI}${n}D"
+    // "$ESC[${n}A"
+    fun moveUp(n: Int) { row -= n }
+    // "$ESC[${n}B"
+    fun moveDown(n: Int) { row += n }
+    // "$ESC[${n}C"
+    fun moveRight(n: Int) { col += n }
+    // "$ESC[${n}D"
+    fun moveLeft(n: Int) { col -= n }
+
+    fun moveToStartOfLine() { col = 0 }
 }

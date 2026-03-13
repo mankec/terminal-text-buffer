@@ -3,6 +3,7 @@ package com.example
 
 // https://jakob-bagterp.github.io/colorist-for-python/ansi-escape-codes/standard-16-colors/
 
+const val ESC = "\u001B"
 const val ANSI_CSI = "\u001B["
 
 enum class AnsiColor(val code: Int) {

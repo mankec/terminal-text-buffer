@@ -2,6 +2,7 @@ package com.example
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
+import java.awt.SystemColor.text
 import java.io.File
 import kotlin.collections.joinToString
 import kotlin.math.exp
@@ -167,23 +168,26 @@ class TerminalBufferTest {
         terminal.insert(text2)
 
         val screen = terminal.screen
-        var firstLineRow = screen.lines[0][0].joinToString("") { it.value }
-        var secondLineRow = screen.lines[1][0].joinToString("") { it.value }
-        assertEquals(text1, firstLineRow)
-        assertEquals(text2, secondLineRow)
+        var screenFirstLineRow = screen.lines[0][0].joinToString("") { it.value }
+        assertEquals(text1, screenFirstLineRow)
+        var screenSecondLineRow = screen.lines[1][0].joinToString("") { it.value }
+        assertEquals(text2, screenSecondLineRow)
 
         terminal.enterNewLine()
         terminal.insert(text3)
-        assertEquals(2, screen.lines.size)
-
-        firstLineRow = screen.lines[0][0].joinToString("") { it.value }
-        secondLineRow = screen.lines[1][0].joinToString("") { it.value }
-        assertEquals(text2, firstLineRow)
-        assertEquals(text3, secondLineRow)
+        assertEquals(3, screen.lines.size)
 
         val scrollbackFirstLineRow =
-            terminal.scrollback.lines[0][0].joinToString("") { it.value }
+            terminal.screen.lines[0][0].joinToString("") { it.value }
         assertEquals(text1, scrollbackFirstLineRow)
+        assertTrue(
+            screen.isLineFrozen(screen.lines[0])
+        )
+
+        screenFirstLineRow = screen.lines[1][0].joinToString("") { it.value }
+        assertEquals(text2, screenFirstLineRow)
+        screenSecondLineRow = screen.lines[2][0].joinToString("") { it.value }
+        assertEquals(text3, screenSecondLineRow)
     }
 
     @Test
@@ -200,25 +204,24 @@ class TerminalBufferTest {
         terminal.insert(text2)
 
         val screen = terminal.screen
-        val scrollback = terminal.scrollback
-        var firstLineRow = screen.lines[0][0].joinToString("") { it.value }
-        assertEquals(text2, firstLineRow)
-
         var scrollbackFirstLineRow =
-            scrollback.lines[0][0].joinToString("") { it.value }
+            screen.lines[0][0].joinToString("") { it.value }
         assertEquals(text1, scrollbackFirstLineRow)
+
+        var screenFirstLineRow = screen.lines[1][0].joinToString("") { it.value }
+        assertEquals(text2, screenFirstLineRow)
 
         terminal.enterNewLine()
         terminal.insert(text3)
-        assertEquals(1, screen.lines.size)
-        assertEquals(1, scrollback.lines.size)
-
-        firstLineRow = screen.lines[0][0].joinToString("") { it.value }
-        assertEquals(text3, firstLineRow)
+        assertEquals(2, screen.lines.size)
 
         scrollbackFirstLineRow =
-            scrollback.lines[0][0].joinToString("") { it.value }
+            screen.lines[0][0].joinToString("") { it.value }
         assertEquals(text2, scrollbackFirstLineRow)
+
+        screenFirstLineRow = screen.lines[1][0].joinToString("") { it.value }
+        assertEquals(text3, screenFirstLineRow)
+
     }
 
     @Test
@@ -235,17 +238,33 @@ class TerminalBufferTest {
     }
 
     @Test
-    fun `clear entire screen`() {
-        val text = "Hello"
-        terminal.insert(text)
-        terminal.insertEmptyLineAtBottomOfScreen()
+    fun `clear screen`() {
+        val height = 1
+        val scrollbackMaxSize = 1
+        val terminal = setupTerminalBuffer(height, scrollbackMaxSize)
+        val text1 = "Hello!"
+        val text2 = "Hello!!"
 
-        val firstRow = terminal.screen.lines[0][0].joinToString("") { it.value }
-        assertEquals(text, firstRow)
+        terminal.insert(text1)
+        terminal.enterNewLine()
+        terminal.insert(text2)
+
         assertEquals(2, terminal.screen.lines.size)
 
+        var scrollbackFirstLineRow =
+            terminal.screen.lines[0][0].joinToString("") { it.value }
+        assertEquals(text1, scrollbackFirstLineRow)
+        val screenFirstLineRow =
+            terminal.screen.lines[1][0].joinToString("") { it.value }
+        assertEquals(text2, screenFirstLineRow)
+
         terminal.clearScreen()
-        assertEquals(0, terminal.screen.lines.size)
+        assertEquals(1, terminal.screen.lines.size)
+
+        scrollbackFirstLineRow =
+            terminal.screen.lines[0][0].joinToString("") { it.value }
+        assertEquals(text1, scrollbackFirstLineRow)
+
         assertEquals(0, terminal.cursor.col)
         assertEquals(0, terminal.cursor.row)
         assertEquals(0, terminal.cursor.line)
@@ -265,44 +284,19 @@ class TerminalBufferTest {
         terminal.insert(text2)
 
         val screen = terminal.screen
-        val scrollback = terminal.scrollback
-        val firstLineRow = screen.lines[0][0].joinToString("") { it.value }
-        assertEquals(text2, firstLineRow)
-
         val scrollbackFirstLineRow =
-            scrollback.lines[0][0].joinToString("") { it.value }
+            screen.lines[0][0].joinToString("") { it.value }
         assertEquals(text1, scrollbackFirstLineRow)
+
+        val firstScreenLineRow = screen.lines[1][0].joinToString("") { it.value }
+        assertEquals(text2, firstScreenLineRow)
+
 
         terminal.clearAll()
         assertEquals(0, terminal.screen.lines.size)
-        assertEquals(0, terminal.scrollback.lines.size)
         assertEquals(0, terminal.cursor.col)
         assertEquals(0, terminal.cursor.row)
         assertEquals(0, terminal.cursor.line)
-    }
-
-    @Test
-    fun `store both screen and scrollback lines in read only mode`() {
-        val text1 = "Hello!!!"
-        val text2 = "Yes?"
-        val height = 1
-        val scrollbackMaxSize = 1
-        val terminal = setupTerminalBuffer(height, scrollbackMaxSize)
-
-        terminal.insert(text1)
-        terminal.enterNewLine()
-        terminal.insert(text2)
-
-        assertEquals(2, terminal.lines.size)
-
-        val firstLine =
-            terminal.lines[0][0].joinToString("") { it.value }
-        assertEquals(text1, firstLine)
-
-        val secondLine =
-            terminal.lines[1][0].joinToString("") { it.value }
-        assertEquals(text2, secondLine)
-
     }
 
     @Test
@@ -349,5 +343,44 @@ class TerminalBufferTest {
             terminal.getAttrFromPosition("invalid", col, line)
         }
         assertEquals("Unknown attribute: $invalid", exception.message)
+    }
+
+    @Test
+    fun `disallow editing scrollback`() {
+        val text1 = "Hello!!!"
+        val text2 = "Yes?"
+        val height = 1
+        val scrollbackMaxSize = 1
+        val terminal = setupTerminalBuffer(height, scrollbackMaxSize)
+        val screen = terminal.screen
+        val cursor = terminal.cursor
+
+        terminal.insert(text1)
+        terminal.enterNewLine()
+        terminal.insert(text2)
+
+        cursor.moveToStartOfLine()
+        cursor.row = 0
+        cursor.line = 0
+
+        val newText1 = "Hey!"
+        terminal.insert(newText1)
+
+        val scrollbackFirstLineRow =
+            screen.lines[0][0].joinToString("") { it.value }
+        print(scrollbackFirstLineRow)
+        assertEquals(text1, scrollbackFirstLineRow)
+        assertTrue(screen.isLineFrozen(screen.lines[0]))
+
+        cursor.moveToStartOfLine()
+        cursor.row = 0
+        cursor.line = 1
+        val newText2 = "Yes?????"
+        terminal.insert(newText2)
+
+        val screenFirstLineRow =
+            screen.lines[1][0].joinToString("") { it.value }
+        assertEquals(newText2, screenFirstLineRow)
+        assertFalse(screen.isLineFrozen(screen.lines[1]))
     }
 }

@@ -441,7 +441,6 @@ class TerminalBufferTest {
         var lineIdx = 0
         val scrollbackFirstLineRow =
             screen.lines[lineIdx][0].joinToString("") { it.value }
-        print(scrollbackFirstLineRow)
         assertEquals(text1, scrollbackFirstLineRow)
         assertTrue(screen.isLineFrozen(lineIdx))
 
@@ -456,5 +455,25 @@ class TerminalBufferTest {
             screen.lines[lineIdx][0].joinToString("") { it.value }
         assertEquals(newText2, screenFirstLineRow)
         assertFalse(screen.isLineFrozen(lineIdx))
+    }
+
+    @Test
+    fun `reset cursor to first screen (non-frozen) line`() {
+        val text1 = "Hello!!!"
+        val text2 = "Yes?"
+        val text3 = "I don't know maybe"
+        val height = 1
+        val terminal = setupTerminalBuffer(height)
+        val screen = terminal.screen
+        val cursor = terminal.cursor
+
+        terminal.insert(text1)
+        terminal.enterNewLine()
+        terminal.insert(text2)
+        terminal.enterNewLine()
+        terminal.insert(text3)
+
+        screen.resetCursor()
+        assertEquals(2, cursor.line)
     }
 }

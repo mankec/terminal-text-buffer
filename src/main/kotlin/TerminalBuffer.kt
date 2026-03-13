@@ -113,12 +113,12 @@ class TerminalBuffer(
 
     fun clearScreen() {
         screen.lines.removeIf { !it[0][0].frozen }
-        cursor.reset()
+        screen.resetCursor()
     }
 
     fun clearAll() {
         screen.lines.clear()
-        cursor.reset()
+        screen.resetCursor()
     }
 
     fun getAttrFromPosition(attr: String, col: Int, lineIdx: Int): Any {
@@ -269,5 +269,16 @@ object Screen {
 
     fun getNonFrozenLines(): MutableList<MutableList<MutableList<Cell>>> {
         return lines.filter { !it[0][0].frozen }.toMutableList()
+    }
+
+    fun resetCursor() {
+        val cursor = terminal.cursor
+        cursor.row = 0
+        cursor.moveToStartOfLine()
+        val nonFrozenLines = getNonFrozenLines()
+        val resetToLine =
+            if (nonFrozenLines.isNotEmpty()) lines.indexOf(getNonFrozenLines()[0])
+            else 0
+        cursor.line = resetToLine
     }
 }

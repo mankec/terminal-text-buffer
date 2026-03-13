@@ -16,10 +16,4 @@ object Cursor {
     fun moveLeft(n: Int) { col -= n }
 
     fun moveToStartOfLine() { col = 0 }
-
-    fun reset() {
-        line = 0
-        row = 0
-        col = 0
-    }
 }

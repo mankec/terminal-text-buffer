@@ -249,4 +249,34 @@ class TerminalBufferTest {
         assertEquals(0, terminal.cursor.row)
         assertEquals(0, terminal.cursor.line)
     }
+
+
+    @Test
+    fun `clear all (screen and scrollback)`() {
+        val height = 1
+        val scrollbackMaxSize = 1
+        val terminal = setupTerminalBuffer(height, scrollbackMaxSize)
+        val text1 = "Hello!"
+        val text2 = "Hello!!"
+
+        terminal.insert(text1)
+        terminal.enterNewLine()
+        terminal.insert(text2)
+
+        val screen = terminal.screen
+        val scrollback = terminal.scrollback
+        val firstLineRow = screen.lines[0][0].joinToString("") { it.value }
+        assertEquals(text2, firstLineRow)
+
+        val scrollbackFirstLineRow =
+            scrollback.lines[0][0].joinToString("") { it.value }
+        assertEquals(text1, scrollbackFirstLineRow)
+
+        terminal.clearAll()
+        assertEquals(0, terminal.screen.lines.size)
+        assertEquals(0, terminal.scrollback.lines.size)
+        assertEquals(0, terminal.cursor.col)
+        assertEquals(0, terminal.cursor.row)
+        assertEquals(0, terminal.cursor.line)
+    }
 }

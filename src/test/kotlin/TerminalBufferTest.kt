@@ -362,10 +362,40 @@ class TerminalBufferTest {
         assertTrue(screen.isLineFrozen(lineIdx))
         assertEquals(text1, result1)
 
+        val result2 = terminal.getLineAsString(line = screen.lines[lineIdx])
+        assertEquals(text1, result2)
+
         // Screen
         lineIdx++
-        val result2 = terminal.getLineAsString(lineIdx)
-        assertEquals(text2, result2)
+        val result3 = terminal.getLineAsString(lineIdx)
+        assertEquals(text2, result3)
+
+        val result4 = terminal.getLineAsString(line = screen.lines[lineIdx])
+        assertEquals(text2, result4)
+
+        val exception = assertFailsWith<IllegalArgumentException> {
+            terminal.getLineAsString()
+        }
+        assertEquals("Provide either lineIdx or line", exception.message)
+    }
+
+    @Test
+    fun `get screen content as string`() {
+        val text1 = "Hello there this is a simple sentence"
+        val text2 = " Yet  another   simple  sentence "
+        val text3 = "This sentence is pretty short"
+        val height = 2
+        val terminal = setupTerminalBuffer(height)
+
+        terminal.insert(text1)
+        terminal.enterNewLine()
+        terminal.insert(text2)
+        terminal.enterNewLine()
+        terminal.insert(text3)
+
+        val result = terminal.getScreenContentAsString()
+        val expected = "$text2\n$text3"
+        assertEquals(expected, result)
     }
 
     @Test

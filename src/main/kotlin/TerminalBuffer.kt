@@ -49,7 +49,7 @@ class TerminalBuffer(
                 newRow
             }
         val cell = lineRow.getOrElse(cursor.col) {
-            val newCell = Screen.createCell()
+            val newCell = screen.createCell()
             lineRow.add(newCell)
             newCell
         }
@@ -145,10 +145,22 @@ class TerminalBuffer(
         }
     }
 
-    fun getLineAsString(lineIdx: Int): String {
-        val line = screen.lines[lineIdx]
-        val flattenedRows = line.flatten()
+    fun getLineAsString(
+        lineIdx: Int? = null, line: MutableList<MutableList<Cell>>? = null): String
+    {
+        val flattenedRows =
+            if (lineIdx != null) screen.lines[lineIdx].flatten()
+            else line?.flatten()
+            ?: throw IllegalArgumentException("Provide either lineIdx or line")
         return flattenedRows.joinToString(separator = "") { it.value }
+    }
+
+    fun getScreenContentAsString(): String {
+        val nonFrozenLines = screen.getNonFrozenLines()
+        val stringifiedLines = nonFrozenLines.map { line ->
+            getLineAsString(line = line)
+        }
+        return stringifiedLines.joinToString("\n")
     }
 }
 
@@ -228,7 +240,7 @@ object Screen {
         val newLine = mutableListOf(mutableListOf(cell))
         lines.add(newLine)
 
-        val nonFrozenLines = lines.filter { !it[0][0].frozen }
+        val nonFrozenLines = getNonFrozenLines()
         if (nonFrozenLines.size > height) {
             nonFrozenLines[0].forEach { row ->
                 row.forEach { it.frozen = true }
@@ -246,5 +258,9 @@ object Screen {
 
     fun isLineFrozen(lineIdx: Int): Boolean {
         return lines[lineIdx][0][0].frozen
+    }
+
+    fun getNonFrozenLines(): MutableList<MutableList<MutableList<Cell>>> {
+        return lines.filter { !it[0][0].frozen }.toMutableList()
     }
 }
